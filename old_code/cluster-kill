@@ -1,0 +1,18 @@
+#!/bin/bash
+
+# get names of all nodes including this cpu
+NAMES=$(echo $(uname -n) $(cat /var/lib/torque/server_priv/nodes | cut -d\  -f1))
+
+# get process id of program and kill it for each node
+for X in $NAMES
+do
+	PID=$(getpid.sh $X $1)
+	echo $PID | grep "[^0-9]" > /dev/null 2>&1
+	#if [ "$?" -ne "0" ]; then
+	if [ "$PID" != "" ]; then
+		echo "Killing" $1 "on" $X "with pid" $PID
+		killproc.sh $X $PID 2>&1 /dev/null
+	fi
+done
+
+

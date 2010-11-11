@@ -1,0 +1,5 @@
+nukestar01	192.168.1.2	root
+nukestar02	192.168.1.3	es5729
+nukestar03	192.168.1.6	scopatz
+nukestar05	192.168.1.5	gthoreson
+nukestar08	192.168.1.100	perryg

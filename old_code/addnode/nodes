@@ -1,0 +1,5 @@
+nukestar01 np=4 MasterWorkstation1
+nukestar02 np=4 SlaveWorkstation1
+nukestar03 np=4 SlaveWorkstation2
+nukestar05 np=4 WhiteSlave1
+nukestar08 np=4 ThanksJosh

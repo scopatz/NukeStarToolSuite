@@ -1,0 +1,24 @@
+#! /bin/sh
+# /etc/init.d/torque-server
+#
+
+
+case "$1" in
+  start)
+    echo "Starting pbs_server "
+    pbs_server
+    echo "Starting maui "
+    maui
+    ;;
+  stop)
+    killall pbs_server
+    killall maui
+    ;;
+  *)
+    echo "Usage: /etc/init.d/torque-server {start|stop}"
+    exit 1
+    ;;
+esac
+
+exit 0
+

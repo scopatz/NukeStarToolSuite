@@ -1,0 +1,320 @@
+%General LaTeX Document Template
+%Build Using...
+%     NAME="NukeStarCrib" && latex ${NAME}.tex && dvipdf ${NAME}.dvi
+% ~OR~
+%     NAME="NukeStarCrib" && pdflatex ${NAME}.tex 
+
+\documentclass[a4paper, 12pt]{article}
+\usepackage{a4wide}
+\usepackage{epsfig}
+\usepackage{color}
+\usepackage{verbatim} 
+\usepackage{cite} 
+\usepackage{hyperref}
+\usepackage{amsmath}
+
+\setlength\hoffset{-1.0in}
+\setlength\marginparsep{0pt}
+\setlength\oddsidemargin{30pt}
+\setlength\evensidemargin{30pt}
+\setlength\textwidth{537pt}
+
+
+%General Short-Cut Commands
+\newcommand{\superscript}[1]{\ensuremath{^{\textrm{#1}}}}
+\newcommand{\subscript}[1]{\ensuremath{_{\textrm{#1}}}}
+\newcommand{\nuc}[2]{\superscript{#2}{#1}}
+
+%Commands for this document...
+
+\begin{document}
+
+\begin{center}
+
+NukeStar Crib Sheet
+\vspace{10mm}
+
+Anthony Michael Scopatz, Greg Thoreson\\
+The University of Texas at Austin
+\end{center}
+\vspace{5mm}
+
+Welcome, prospective NukeStar user!  NukeStar is a heterogeneous Ubuntu-based cluster for Dr. Schneider's working group.
+It was designed primarily to aid in computational tasks that are too large for laptop.  The web server front of
+the cluster may be accessed via \url{http://nukestar.me.utexas.edu/}.  Please feel free to make an account on the 
+wiki.  The physical cluster acts as a large heater for ETC 7.164.
+
+As a Linux cluster, you should be familiar with the BASH commands and how to navigate a posix command
+line environment.  Unfortunately, I have yet to discover a worthwhile tutorial on this information myself.  
+However, \url{http://ss64.com/bash/} provides a fairly comprehensive command listing.  
+
+\section{SSH Basics} 
+The primary way you will be interacting with NukeStar is through the Secure Socket Layer (SSL) protocol, specifically
+the OpenSSL implementation.  SSL was originally developed for Netscape in 1994 and uses 64 bit, RSA public key encryption 
+to secure web traffic of all sorts.
+
+The SSH program opens a secure shell from a remote machine onto your local one.  Thus to open a terminal on NukeStar 
+from your computer, you would simply type the following into the command line:
+\begin{verbatim}
+user@local $ ssh user@nukestar.me.utexas.edu
+password:
+
+user@nukestar.me.utexas.edu $ <some command> 
+\end{verbatim}
+
+You should also note that SSH contains an optional second command argument.  If this is included, rather than logging you into 
+the remote machine, SSH will simply execute the command remotely and then return your local prompt.  
+This is very useful for running jobs remotely in the background.
+For instance, the following  will list the contents of your NukeStar home directory:
+\begin{verbatim}
+user@local $ ssh user@nukestar.me.utexas.edu ls ~
+password:
+stor/ www/
+user@local $
+\end{verbatim}
+
+OpenSSH also provides SCP, or secure copy.  This allows you to transfer files back and forth between your machine and 
+the remote one.  It's interface is almost exactly the copy (cp) command line interface plus all of the SSH options.  
+The only major difference is that if you want to copy to or from the remote server, the remote location must be prefixed 
+by the appropriate login information.  For example, to a project from your machine to NukeStar you might use, 
+\begin{verbatim}
+scp -r myproject/ user@nukestar.me.utexas.edu:/home/user/stor/
+\end{verbatim}
+
+\section{SSH Keys} 
+As you may have noticed, typing in your password each time to each node in NukeStar can get to be sort of a headache.
+Luckily, the OpenSSL implementation provides you a way to generate a reusable public (RSA) key. The use of such keys is 
+in fact how nodes in the cluster communicate with each other.  To generate your very own key
+on your local machine run the following command:
+\begin{verbatim}
+user@local$ ssh-keygen -N '' -t rsa -f ~/.ssh/id_rsa
+\end{verbatim}
+Then, you need to let NukeStar know about the public half of this key!
+\begin{verbatim}
+user@local$ scp ~/.ssh/id_rsa.pub remoteuser@server:.ssh
+
+remoteuser@server$ cd ~/.ssh
+remoteusre@server$ cat id_rsa.pub >> authorized_keys
+remoteuser@server$ rm id_rsa.pub
+remoteuser@server$ chmod 600 authorized_keys
+\end{verbatim}
+This ssh-keygen tutorial was adapted from \url{http://sial.org/howto/rsync/#s5}.
+
+\section{Special Directories} 
+Heterogeneous clusters are held together by the duct tape of the software world.  A lot of the nice
+features of the homogeneous world (RAID, for one) are difficult to integrate into NukeStar.  But we are faced with the 
+same problem nonetheless.  We have one gateway machine (nukestar01) which has limited and crucial storage space.  
+However, we have several other nodes behind the gateway (nukestar02+) that all under utilize their hard drives.  
+
+The current solution is to have have a special ``stor/" directory in every user's home directory on nukestar01.
+This storage directory is actually remotely mounted via sshfs to another node.  This effectively means that 
+each user has a whole disk worth of space available accessible from ``stor/".  
+Users are \emph{strongly} encouraged to use /home/user/stor/ rather than their home directory.  
+This helps alleviate the burden from our gateway machine.
+If ever we run into a problem where nukestar01 is running out of space, your storage dir will be protected but your
+home dir won't.
+
+Additionally, should you require webspace, you will also have a ``www/" directory present in your home dir.
+This directory is soft linked to the Apache web server root as a dir with your username.  Any files that you 
+place in ``/home/user/www/" will then show up online at \url{http://nukestar.me.utexas.edu/user/}.
+
+\section{How to run MCNP}
+
+To be an eligible MCNP/X user, you must order the exact version of MCNP/X you wish to use from RSICC \url{http://www-rsicc.ornl.gov/}. An administrator then may add you to the appropriate group to give you permissions to use that software. Under no circumstances will a user be given permission without ordering from RSICC first.
+
+Let's say you have created a MCNPX input file called \verb+myjob.i+ on your personal computer, and want to run it on nukestar. Nukestar uses MCNPX \url{http://mcnpx.lanl.gov/} compiled with Intel C++/Fortran v10.1 and OpenMPI v.1.4.1 \url{http://www.open-mpi.org/}. For a scheduler it uses Torque (PBS) v2.4.8 in conjuction with MAUI v3.3 \url{http://www.clusterresources.com/}. The scheduler manages a queue of jobs so the cluster can be used more efficiently. To use MCNPX on the cluster, these are the steps you need to follow:
+
+
+\begin{enumerate}
+	\item We will need a time estimate of your job. One way to do this is to run the job on your personal computer for a few minutes, see how many minutes per particle it takes the simulation to run (ctm/nps), and multiply that number by the nps you plan to use on the cluster. You should then divide that number by 0.7 \(\times\) the number of processors you plan to use minus one (MCNP always sets one processor aside to ``manage'' the others). The resulting number is your estimate of the simulation time in minutes. For example, if you want to run \(N\) particles on the cluster, you would require time
+	\[ t \approx \frac{\text{ctm}}{\text{nps}}\frac{N}{0.7 \times (ncpus-1)} \]
+	Alternatively, you can specify the exact time in your MCNPX input deck using the \verb+ctme+ card (just remember to multiply by the number of processors you plan to use).
+	\item Upload your input file to the cluster, from a linux terminal this can be done with
+		\begin{verbatim}
+			user@local:~$ scp myjob.i user@nukestar.me.utexas.edu:~/.
+		\end{verbatim}
+	\item Log into the cluster
+		\begin{verbatim}
+			user@local:~$ ssh user@nukestar.me.utexas.edu
+		\end{verbatim}
+	\item If you have not already done so, copy the job submission script template to your home directory
+		\begin{verbatim}
+			user@nukestar.me.utexas.edu:~$ cp /usr/share/template.sh . 
+		\end{verbatim}
+	\item Copy the \verb+template.sh+ file to something descriptive of your input file or job
+		\begin{verbatim}
+			user@nukestar.me.utexas.edu:~$ cp template.sh myjob.sh
+		\end{verbatim}
+	\item Open \verb+myjob.sh+ using your favorite text editor, such as nano, pico, or vi
+		\begin{verbatim}
+			user@nukestar.me.utexas.edu:~$ vi myjob.sh
+		\end{verbatim}
+	\item Once in the file \verb+myjob.sh+, edit \verb+nodes=10+ to the number of processors you want to use. Because we have 4 processors per workstation, keeping this in multiples of 4 is optimal but not required. Right now we have 5 workstations for a total of 20 processors available.
+	\item Edit \verb+walltime=01:00:00+ to your estimate of how long it will take the job to complete in the format hh:mm:ss
+	\item At this point it is useful to describe the available resources and queues for your job. There are three different queues made to try to maximize cluster usage and keep everything fair. Which queue your job falls into depends on how many nodes you request and your specified walltime. Here is a summary of the queues:
+
+		\begin{tabular}{|l|l|l|l|}
+			\hline
+			Queue Name: & \textbf{Short} & \textbf{Medium} & \textbf{Long} \\
+			\hline
+			Priority: & High & Medium & Low \\
+			Nodes: & \(\leq\) 12& \(\leq\) 8 & \(\leq\) 6 \\
+			Walltime: & \(\leq\) 1 day & \(>\) 1 day, \(\leq\) 7 days & \(>\) 7 days, \(\leq\) 1/2 year \\
+			\hline
+		\end{tabular}
+
+	If your job does not fall into any of these queues' requirements, it will not submit. If you lie about your walltime and your job exceeds the walltime, the scheduler will terminate your job. So, don't lie and and be generous with your walltime estimate. The priority determines the order in which jobs move from ``queued'' to running. For example, if there are two jobs waiting, one in the short queue and one in the long, once resources are available, the short job will run first. To get a nice summary of available queues on the cluster do
+		\begin{verbatim}
+			user@nukestar.me.utexas.edu:~$ qstat -q
+		\end{verbatim}
+	\item Okay, back to the \verb+template.sh+ file. Edit \verb+job_name+ to something informative of your job, say \verb+myjob+. This name will appear in the scheduler's queue.
+	\item There are a series of PBS settings that look something like
+		\begin{verbatim}
+			#PBS -W stagein=~/test.i@nukestar01:~/test.i
+			#PBS -W stageout=~/test.o@nukestar01:~/test.o
+			#PBS -W stageout=~/test.r@nukestar01:~/test.r
+		\end{verbatim}
+		These are the files that will be copied to the execution host (stagein) before the job is run (such as the input file), and the files that will be copied away from the execution host (stageout) when the job completes. It is very important that you make sure you are copying all files MCNPX generates away from the execution host. If you do not, you will eventually have to hunt down which execution host was used and manually delete them. Change the file names \verb+test.i+,\verb+test.r+,etc to your input file name (\verb+myjob.i+) and desired output filenames. If you have additional files to copy to and from the execution host, just add additional stagein/stageout lines as necessary.
+	\item Farther down in the script there is the MPI/MCNPX execution line. Change the names from \verb+test.*+ to whatever your input and output file names are. These should match what you specified in stagein/stageout above.
+	\item Exit the editor.
+	\item Check how all the nodes are doing by typing
+		\begin{verbatim}
+			user@nukestar.me.utexas.edu:~$ qnodes
+		\end{verbatim}
+		which should list all available nodes and the current state. For each node you should see something like
+		\begin{verbatim}
+			nukestar01
+		     state = free
+		     np = 4
+		     properties = MasterWorkstation1
+		     ntype = cluster
+		     status = opsys=linux,uname=Linux nukestar01 2.6.31-14-server... etc
+		\end{verbatim}
+		If any of them say \verb+state = down+, contact a system administator and take note that there are 4 less processors available than usual.
+	\item Check the current status of the queue by typing
+		\begin{verbatim}
+			user@nukestar.me.utexas.edu:~$ qstat -a
+		\end{verbatim}
+		If there are any jobs running it will show something like
+		{\footnotesize
+		\begin{verbatim}
+			                                                                         Req'd  Req'd   Elap
+			Job ID               Username Queue    Jobname          SessID NDS   TSK Memory Time  S Time
+			-------------------- -------- -------- ---------------- ------ ----- --- ------ ----- - -----
+			232.nukestar01       gthoreso short    job_name            --      8  8    --   12:00 R 11:23
+		\end{verbatim}
+		}
+		The important things to notice are:
+		\begin{itemize}
+			\item \verb+Job ID+: the first three numbers are the job number
+			\item \verb+NDS+: how many processors the job is using
+			\item \verb+Req'd Time+: how long the user thinks the job will last (in hh:mm)
+			\item \verb+Elap Time+: how long the job has been running (in hh:mm)
+			\item \verb+S+: the status of the job, \verb+R+ means running, \verb+Q+ means queued, and \verb+E+ means there is an error
+		\end{itemize}
+		Any user may only have one job running at a time (total) and one job in each queue waiting. If you want a more `executive' summary of cluster usage, you can use the MAUI summary,
+		\begin{verbatim}
+			user@nukestar.me.utexas.edu:~$ /usr/local/maui/bin/showq
+		\end{verbatim}
+		which may display something like:
+		{\footnotesize
+		\begin{verbatim}
+ACTIVE JOBS--------------------
+JOBNAME            USERNAME      STATE  PROC   REMAINING            STARTTIME
+
+48                 gthoreson    Running     8  1:06:43:23  Mon May 10 16:44:12
+
+     1 Active Job        8 of   20 Processors Active (40.00%)
+                         2 of    5 Nodes Active      (40.00%)
+
+IDLE JOBS----------------------
+JOBNAME            USERNAME      STATE  PROC     WCLIMIT            QUEUETIME
+
+
+0 Idle Jobs
+
+BLOCKED JOBS----------------
+JOBNAME            USERNAME      STATE  PROC     WCLIMIT            QUEUETIME
+
+
+0 Blocked Jobs
+
+Total Jobs: 1   Active Jobs: 1   Idle Jobs: 0   Blocked Jobs: 0
+		\end{verbatim}
+		}
+		which is nice because it tells you how much time the active jobs have remaining in dd:hh:mm:ss.
+	\item Okay, we are finally ready to submit your job. Submit your job to the cluster by typing
+		\begin{verbatim}
+			user@nukestar.me.utexas.edu:~$ qsub myjob.sh
+		\end{verbatim}
+	\item If you check on the queue again, and there are enough resources, and you don't see your job, there is probably something wrong with your input deck. Check the \verb+job_name.o###+ output file that is generated to see what errors you get. If you check on the queue and you see something like
+	{\footnotesize
+	\begin{verbatim}
+			                                                                         Req'd  Req'd   Elap
+			Job ID               Username Queue    Jobname          SessID NDS   TSK Memory Time  S Time
+			-------------------- -------- -------- ---------------- ------ ----- --- ------ ----- - -----
+			232.nukestar01       gthoreso short    job_name            --      8  8    --  12:00  R 11:23
+			233.nukestar01       user     short    myjob               --      8  8    --  01:00  R   --
+	\end{verbatim}
+	}
+	That means your job is successfully running on the cluster, you may log out and check on it later. But what if you realize you made a mistake and need to stop the job? Remember, \verb+233+ is your job number, so type
+		\begin{verbatim}
+			user@nukestar.me.utexas.edu:~$ qdel 233
+			user@nukestar.me.utexas.edu:~$ cluster-kill mcnpx260
+		\end{verbatim}
+	but beware, the \verb+cluster-kill+ command will kill all of your mcnpx proccesses on all nodes, so if you have multiple jobs running, wait until you are finished with all of them before doing cluster-kill.
+	\item When the job is finished, it is recommended you move your larger files (runtpe,etc) to the \verb+stor/+ directory in your home directory to keep nukestar happy.
+	\item Helpful hints:
+	{\small
+	\begin{itemize}
+		\item Control how frequently the processors rendezvous by the fifth entry on the \verb+PRDMP+ card. The default is 1000, which is extremely frequent. You can achieve higher cluster efficiency by making this number something more reasonable (like nps/100).
+		\item Send your output files directly to your \verb+stor/+ directory using
+		\begin{verbatim}
+			#PBS -W stageout=~/test.o@nukestar01:~/stor/test.o
+			#PBS -W stageout=~/test.r@nukestar01:~/stor/test.r
+		\end{verbatim}
+		\item Expedite large file transfer to your personal computer by compressing your files. Say you have a job directory \verb+myjobdir/+ in your home directory. From your personal computer, type
+		\begin{verbatim}
+			user@local:~$ ssh user@nukestar.me.utexas.edu tar -czf - myjobdir/ | tar -xzf -
+		\end{verbatim}
+		and after a short file transfer the directory \verb+myjobdir/+ will magically appear on your own computer.
+		\item When you submit a job, you will not see the normal MCNP output you would see on your personal computer. However, you may periodically check the output of job 233 using
+		\begin{verbatim}
+			user@nukestar.me.utexas.edu:~$ checkjob 233
+		\end{verbatim}
+		but this is not guaranteed to find your output.
+		\item Sometimes your library setup may be different on your personal computer. To try to track down problems, run MCNPX serially on the cluster. For example,
+		\begin{verbatim}
+			user@nukestar.me.utexas.edu:~$ export DATAPATH=/usr/share/mcnpxv260/lib
+			user@nukestar.me.utexas.edu:~$ /usr/share/mcnpxv260/bin/mcnpx260 i=test.i n=test. 
+		\end{verbatim}
+		which would be like running on your personal computer. But this should only be used for debugging. Do not run long jobs without the scheduler.
+	\end{itemize}
+	}
+\end{enumerate}
+
+
+
+\section{Solutions for Windows Users}
+While it is tempting to tell you not to use Windows, the sad truth of the matter is that it is 
+still the industry standard OS.  As such it has many legitimate uses.  (Note: Mac OSX users operate in an 
+posix environment, so they may use the Linux instructions above.)  Here are some possible options for interfacing 
+with NukeStar in a Windows environment.
+\begin{itemize}
+    \item For ssh needs, PuTTY is an excellent code package for spawning remote terminals, using scp, etc.
+        You may find it at \url{http://www.chiark.greenend.org.uk/~sgtatham/putty/download.html}
+    \item A more Windows friendly file transfer program is called WinSCP and may be found at 
+        \url{http://winscp.net/eng/download.php}.  You'll want to use this as pscp (PuTTY's scp) 
+        is a pain.
+    \item Implement a posix environment on Windows. In fact if you are dedicated to windows, you will 
+        probably have to do this eventually.  The two most famous ones are Cygwin and MinGW.  
+        Research the one that fits your needs best.
+    \item Dual boot Linux and Windows, then use the OS that best solves your current task.
+    \item \underline{Best Option:} Install some flavor of Linux and then use VirtualBox for your Windows needs.
+        I would recommend Ubuntu because it is easy to install and almost easy to use.  
+        I would also recommend Gentoo because you'll come out of the install experience having
+        learned a lot about how your computer works, totally confused, or both
+\end{itemize}
+
+
+\end{document}

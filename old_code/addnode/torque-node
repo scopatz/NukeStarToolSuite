@@ -1,0 +1,21 @@
+#! /bin/sh
+# /etc/init.d/torque-node
+#
+
+
+case "$1" in
+  start)
+    echo "Starting pbs_mom "
+    pbs_mom
+    ;;
+  stop)
+    killall pbs_mom
+    ;;
+  *)
+    echo "Usage: /etc/init.d/torque-node {start|stop}"
+    exit 1
+    ;;
+esac
+
+exit 0
+

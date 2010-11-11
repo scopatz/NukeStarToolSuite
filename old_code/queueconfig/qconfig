@@ -1,0 +1,106 @@
+
+# Create queues and set their attributes.
+#
+#
+create queue default
+set queue default queue_type = Route
+set queue default max_running = 20
+set queue default route_destinations = overlord
+set queue default route_destinations += short
+set queue default route_destinations += medium
+set queue default route_destinations += long
+set queue default enabled = True
+set queue default started = True
+##set queue default route_destinations += debug
+##set queue default route_destinations += short
+##set queue default route_destinations += extended
+#
+# Create and define overlord queue
+#
+create queue overlord
+set queue overlord queue_type = Execution
+set queue overlord Priority = 1
+set queue overlord acl_users = es5729
+set queue overlord acl_user_enable = True
+set queue overlord max_running = 100
+set queue overlord max_queuable = 100
+set queue overlord resources_min.nodect = 2
+set queue overlord resources_max.nodect = 20
+set queue overlord resources_available.nodect = 20
+#set queue overlord max_user_run = 100
+set queue overlord max_user_queuable = 100
+set queue overlord resources_max.walltime = 3600:00:00
+set queue overlord enabled = True
+set queue overlord started = True
+#
+#
+# Create and define queue long
+#
+create queue long
+set queue long queue_type = Execution
+set queue long Priority = 4
+set queue long max_running = 100
+set queue long max_queuable = 100
+set queue long resources_min.nodect = 1
+set queue long resources_max.nodect = 6
+set queue long resources_available.nodect = 20
+#set queue long max_user_run = 1
+set queue long max_user_queuable = 2
+set queue long resources_min.walltime = 1440:00:00
+set queue long resources_max.walltime = 3600:00:00
+set queue long enabled = True
+set queue long started = True
+#
+# Create and define queue medium
+#
+create queue medium
+set queue medium queue_type = Execution
+set queue medium Priority = 3
+set queue medium max_running = 100
+set queue medium max_queuable = 100
+set queue medium resources_min.nodect = 1
+set queue medium resources_max.nodect = 8
+set queue medium resources_available.nodect = 20
+#set queue medium max_user_run = 1
+set queue medium max_user_queuable = 2
+set queue medium resources_min.walltime = 24:00:0
+set queue medium resources_max.walltime = 1440:00:00
+set queue medium enabled = True
+set queue medium started = True
+#
+# Create and define queue short
+#
+create queue short
+set queue short queue_type = Execution
+set queue short Priority = 2
+set queue short max_running = 100
+set queue short max_queuable = 100
+set queue short resources_min.nodect = 1
+set queue short resources_max.nodect = 12
+set queue short resources_available.nodect = 20
+#set queue short max_user_run = 1
+set queue short max_user_queuable = 2
+set queue short resources_min.walltime = 00:00:01
+set queue short resources_max.walltime = 24:00:00
+set queue short enabled = True
+set queue short started = True
+#
+# Set server attributes.
+#
+set server scheduling = True
+set server max_user_run = 1
+set server default_queue = default
+set server log_events = 63
+# set server mail_from = adm
+set server query_other_jobs = True
+# set server resources_default.cput = 01:00:00
+set server resources_default.neednodes = 1
+set server resources_default.nodect = 1
+set server resources_available.nodect = 20
+set server resources_default.nodes = 1
+set server scheduler_iteration = 60
+set server node_ping_rate = 100
+set server node_check_rate = 100
+set server tcp_timeout = 6
+set server default_node = 100
+
